@@ -1,14 +1,33 @@
 ﻿using System;
 using Confluent.Kafka;
 using System.Threading;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
-namespace kafka_concurrent_processing
+namespace KafkaConcurrentProcessing
 {
 	class Program
 	{
 		static void Main(string[] args)
 		{
-			Console.WriteLine("Hello World!");
+			ServiceCollection serviceCollection = new ServiceCollection();
+
+			serviceCollection.AddDbContext<EmployeeDbContext>(options =>
+			{
+				options.UseNpgsql("Host=localhost;Port=5432;Database=employeedb;Username=chuasweechin");
+			});
+
+			var serviceProvider = serviceCollection.BuildServiceProvider();
+			EmployeeDbContext context = serviceProvider.GetService<EmployeeDbContext>();
+
+			TestDatabaseConnectivity(context);
+			//KafkaLongRunningProcessTest();
+		}
+
+		static void TestDatabaseConnectivity(EmployeeDbContext context)
+		{
+			Employee employee = context.Employees.Find("dc26caff-0324-49ca-b4e4-e1107b3b6a0e");
+			Console.WriteLine(employee.Name);
 		}
 
 		static void KafkaLongRunningProcessTest()
@@ -90,6 +109,5 @@ namespace kafka_concurrent_processing
 				}
 			}
 		}
-
 	}
 }
